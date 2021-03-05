@@ -9,6 +9,7 @@ abstract class Command<ARGTYPE, C : Command<ARGTYPE, C, RUNNER>, RUNNER : Comman
     var description: String = "No Description",
     val runner: RUNNER,
 ) {
+    fun suggest(args: Argument<ARGTYPE>) : List<ARGTYPE> { return listOf()  }
 
     val subcommands = mutableListOf<C>()
 
@@ -45,12 +46,13 @@ class Argument<ARG>(val content: List<ARG>, var index: Int = 0) : List<ARG> by c
         runCatching { parser(Argument(this.subList(index, index + size))).also { index += size } }.getOrNull()
 
 
-    @ParserDSL fun <R> vararg(size : Int = this.size, parser: Argument<ARG>.() -> R): List<R> =
+    @ParserDSL fun <R> vararg(size: Int = this.size, parser: Argument<ARG>.() -> R): List<R> =
         runCatching { Argument(this.subList(index, size)).map { parser(Argument(listOf(it))) } }
             .getOrElse { listOf() }
 
 
 }
+
 fun <T> T?.default(value: T) = this ?: value
 fun <T> T?.required(message: String = "Missing Value") = this ?: error(message)
 
@@ -69,6 +71,15 @@ interface CommandRunner<ARGTYPE, C : Command<ARGTYPE, C, RUNNER>, RUNNER : Comma
         createCommand(this, applier = applier).apply { commands.add(this) }
 
     fun createCommand(name: String, description: String = "No Description", applier: C.() -> Unit): C
+
+    fun suggest(input: List<ARGTYPE>): List<String> {
+        var cmds: List<C>? = commands
+        repeat(input.size) { index ->
+            cmds = cmds?.find { it.name.startsWith(input.getOrNull(index).toString(), true) }?.subcommands
+        }
+
+        return cmds?.map { it.name } ?: listOf()
+    }
 }
 
 open class StringCommand(name: String, description: String = "No Description", runner: StringCommandRunner) :

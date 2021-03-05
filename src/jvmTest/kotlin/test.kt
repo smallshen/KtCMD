@@ -32,8 +32,10 @@ fun main() {
             }
         }
 
-    val cmd = "set Dirt 10 99 88 77 1237 834"
-    commands.run(if (cmd.trim().isEmpty()) return else cmd.split(" "))
+    val cmd = "add"
+//    println()
+    println(commands.suggest(cmd.split(" ").filter { it.isNotEmpty() }))
+//    commands.run(if (cmd.trim().isEmpty()) return else cmd.split(" "))
 }
 
 data class Pos(val x: Int, val y: Int, val z: Int)
